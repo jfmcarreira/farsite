@@ -12,36 +12,48 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
+#include <filesystem>
 #include "barriers.hpp"
 
-#ifndef WIN32
+#define MAX_PATH 256
+#define FALSE 0
+#define strcmpi strcasecmp
+
+#ifdef UNIX
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/sendfile.h>
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
-#define strcmpi strcasecmp
-#define FALSE 0
-#define MAX_PATH 256
+
+// #include <sys/sendfile.h>
+// void CopyFile(char *in, char *out, bool unused)
+// {
+
+//     int read_fd;
+//     int write_fd;
+//     struct stat stat_buf;
+//     off_t offset = 0;
+
+//     read_fd = open(in, O_RDONLY);
+//     fstat(read_fd, &stat_buf);
+//     write_fd = open(out, O_WRONLY | O_CREAT, stat_buf.st_mode);
+//     sendfile(write_fd, read_fd, &offset, stat_buf.st_size);
+//     close(read_fd);
+//     close(write_fd);
+// }
+#else
+#include <io.h>
+#endif
+
 void CopyFile(char *in, char *out, bool unused)
 {
-
-    int read_fd;
-    int write_fd;
-    struct stat stat_buf;
-    off_t offset = 0;
-
-    read_fd = open(in, O_RDONLY);
-    fstat(read_fd, &stat_buf);
-    write_fd = open(out, O_WRONLY | O_CREAT, stat_buf.st_mode);
-    sendfile(write_fd, read_fd, &offset, stat_buf.st_size);
-    close(read_fd);
-    close(write_fd);
+	std::filesystem::path org_path{in};
+	std::filesystem::path dest_path{out};
+	std::filesystem::copy(org_path, dest_path);
 }
-#endif
 using namespace std;
 
 const double IGNITON_GRID_LINEDIST_DIVISOR  = 1000.0;
@@ -1585,7 +1597,7 @@ double* Farsite5::AllocPerimeter1(long NumFire, long NumPoints)
 			}
 		}
 		nmemb = (NumPoints) * NUMDATA;			// add 1 to make room for bounding rectangle
-                if (perimeter1[NumFire] && perimeter1[NumFire] > 0)
+		if (perimeter1[NumFire] /*&& perimeter1[NumFire] > 0*/)
 			FreePerimeter1(NumFire);
 		perimeter1[NumFire] = new double[nmemb];
 
@@ -1736,7 +1748,7 @@ long Farsite5::GetElev(long Num)
 long* Farsite5::GetElevAddress(long Num)
 {
 	if (!GroundElev)
-		return (long) NULL;
+		return NULL;
 
 	return &GroundElev[Num];
 }
